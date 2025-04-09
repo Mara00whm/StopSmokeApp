@@ -6,17 +6,38 @@
 //
 
 import UIKit
+import SnapKit
 
 class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
     var window: UIWindow?
 
+    private let httpClient: HTTPClient = .init()
 
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
-        // Use this method to optionally configure and attach the UIWindow `window` to the provided UIWindowScene `scene`.
-        // If using a storyboard, the `window` property will automatically be initialized and attached to the scene.
-        // This delegate does not imply the connecting scene or session are new (see `application:configurationForConnectingSceneSession` instead).
-        guard let _ = (scene as? UIWindowScene) else { return }
+        guard let windowScene = (scene as? UIWindowScene) else { return }
+        window = .init(windowScene: windowScene)
+        startAuthFlow()
+        window?.makeKeyAndVisible()
+        
+    }
+
+    private func startAuthFlow() {
+        let authCoordinator: AuthCoordinator = .init(httpClient: httpClient)
+        authCoordinator.onAuthSuccess = { [weak self] in
+            self?.startAppFlow()
+        }
+        window?.rootViewController = authCoordinator.start()
+    }
+
+    private func startAppFlow() {
+        window?.rootViewController = MainCoordinator(httpClient: httpClient).start()
+        window?.makeKeyAndVisible()
+        UIView.transition(with: window!,
+                          duration: 0.5,
+                          options: .transitionCrossDissolve,
+                          animations: {},
+                          completion: nil)
     }
 
     func sceneDidDisconnect(_ scene: UIScene) {
